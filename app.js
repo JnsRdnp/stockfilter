@@ -1,18 +1,18 @@
-import express from 'express';
-import swaggerUi from 'swagger-ui-express';
-import swaggerSpec from './swagger.js';
-import userRoutes from './routes/userRoutes.js';
+const express = require('express');
+const swaggerUi = require('swagger-ui-express');
+const swaggerSpec = require('./swagger.js');
+const InitialRoutes = require('./routes/InitialRoutes.js')
 
 const app = express();
 
 app.use(express.json());
-app.use('/api/users', userRoutes);
+app.use('/api/initialservice', InitialRoutes);
 
 // Swagger UI setup
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.use('/swagger', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 app.listen(3000, () => {
-  console.log('Server running on http://localhost:3000');
+  console.log('Swagger running on http://localhost:3000/swagger');
 });
 
-export default app; // for testing
+module.exports = app; // for testing
