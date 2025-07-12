@@ -197,6 +197,7 @@ class StockFilterService {
     }
 
 
+    //Moskowitz, Ooi & Pedersen (2012) paper on Momentum Investing with Pullbacks
 
     getMomentumAndPullbackSummaryMV(dbFile = './db/stocks.db') {
     const db = new Database(dbFile);
