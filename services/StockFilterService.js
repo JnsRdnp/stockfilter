@@ -99,7 +99,8 @@ class StockFilterService {
     }
   }
 
-  async fetchAndStore(symbol, dbFile = './db/stocks.db') {
+  async fetchAndStore(symbol) {
+    const dbFile = './db/stocks.db'
     const data = await this.getSymbolData(symbol);
     if (data) {
       await this.saveDataToDb(dbFile, symbol, data);
@@ -126,7 +127,8 @@ class StockFilterService {
     console.log('All symbols processed.');
   }
 
-    getMomentumAndPullbackSummary(dbFile = './db/stocks.db') {
+    getMomentumAndPullbackSummary() {
+    const dbFile = './db/stocks.db'
     const db = new Database(dbFile);
 
     const summary = db.prepare(`
@@ -198,8 +200,8 @@ class StockFilterService {
 
 
     //Moskowitz, Ooi & Pedersen (2012) paper on Momentum Investing with Pullbacks
-
-    getMomentumAndPullbackSummaryMV(dbFile = './db/stocks.db') {
+    getMomentumAndPullbackSummaryMV() {
+    const dbFile = './db/stocks.db'
     const db = new Database(dbFile);
 
     const summary = db.prepare(`
@@ -269,6 +271,263 @@ class StockFilterService {
     db.close();
     return summary;
     }
+
+
+ getMomentumAndPullbackSummaryMV4WeeksAgo() {
+  const dbFile = './db/stocks.db';
+  const db = new Database(dbFile);
+
+  const summary = db.prepare(`
+    WITH RankedWeeks AS (
+      SELECT
+        symbol,
+        timestamp,
+        close,
+        ROW_NUMBER() OVER (PARTITION BY symbol ORDER BY timestamp DESC) AS rn
+      FROM stock_weekly
+    ),
+    FourWeeksAgo AS (
+      SELECT
+        symbol,
+        timestamp AS ts_4w_ago,
+        close AS close_4w_ago
+      FROM RankedWeeks
+      WHERE rn = 5  -- 4 weeks ago
+    ),
+    FiveWeeksAgo AS (
+      SELECT
+        symbol,
+        timestamp AS ts_5w_ago,
+        close AS close_5w_ago
+      FROM RankedWeeks
+      WHERE rn = 6  -- week before 4 weeks ago
+    ),
+    Week52Ago AS (
+      SELECT
+        symbol,
+        timestamp AS ts_52w_ago,
+        close AS close_52w_ago
+      FROM RankedWeeks
+      WHERE rn = 52  -- 52 weeks ago (1 year ago from latest)
+    ),
+    LatestWeek AS (
+      SELECT
+        symbol,
+        close AS latest_close
+      FROM RankedWeeks
+      WHERE rn = 1
+    ),
+    WeeklyReturns AS (
+      SELECT
+        symbol,
+        (close * 1.0 / LAG(close) OVER (PARTITION BY symbol ORDER BY timestamp) - 1) AS weekly_return
+      FROM stock_weekly
+      WHERE timestamp IS NOT NULL
+    ),
+    Volatility AS (
+      SELECT
+        symbol,
+        AVG(ABS(weekly_return)) AS avg_abs_weekly_return
+      FROM WeeklyReturns
+      GROUP BY symbol
+    )
+    SELECT
+      f4.symbol,
+      f4.ts_4w_ago AS buy_date,
+      f4.close_4w_ago AS buy_price,
+      (f5.close_5w_ago * 1.0 / w52.close_52w_ago) - 1 AS yearly_momentum,
+      (f4.close_4w_ago * 1.0 / f5.close_5w_ago) - 1 AS pullback_4w_ago,
+      v.avg_abs_weekly_return AS avg_weekly_volatility,
+      ((f5.close_5w_ago * 1.0 / w52.close_52w_ago) - 1) / v.avg_abs_weekly_return AS momentum_score,
+      ROUND(((lw.latest_close - f4.close_4w_ago) * 100.0 / f4.close_4w_ago), 2) AS price_change_since_4w_percent
+    FROM FourWeeksAgo f4
+    JOIN FiveWeeksAgo f5 ON f4.symbol = f5.symbol
+    JOIN Week52Ago w52 ON f4.symbol = w52.symbol
+    JOIN Volatility v ON f4.symbol = v.symbol
+    JOIN LatestWeek lw ON f4.symbol = lw.symbol
+    WHERE
+      (f5.close_5w_ago * 1.0 / w52.close_52w_ago) - 1 > 0
+      AND (f4.close_4w_ago * 1.0 / f5.close_5w_ago) - 1 BETWEEN -0.05 AND -0.01
+      AND v.avg_abs_weekly_return < 0.07
+    ORDER BY momentum_score DESC;
+  `).all();
+
+  db.close();
+  return summary;
+}
+
+
+
+getResistanceBreakoutCandidates() {
+    const dbFile = './db/stocks.db';
+    const db = new Database(dbFile);
+
+    const summary = db.prepare(`
+        WITH RankedWeeks AS (
+            SELECT
+                symbol,
+                timestamp,
+                high,
+                close,
+                ROW_NUMBER() OVER (PARTITION BY symbol ORDER BY timestamp DESC) AS rn
+            FROM stock_weekly
+        ),
+        LookbackWeeks AS (
+            SELECT symbol, timestamp, high, close
+            FROM RankedWeeks
+            WHERE rn <= 52
+        ),
+        ResistanceLevel AS (
+            SELECT
+                symbol,
+                MAX(high) AS resistance_high
+            FROM LookbackWeeks
+            GROUP BY symbol
+        ),
+        WeekNeighbors AS (
+            SELECT
+                lw.symbol,
+                lw.timestamp,
+                lw.high,
+                lw.close,
+                LAG(lw.high) OVER (PARTITION BY lw.symbol ORDER BY lw.timestamp) AS prev_high,
+                LEAD(lw.high) OVER (PARTITION BY lw.symbol ORDER BY lw.timestamp) AS next_high
+            FROM LookbackWeeks lw
+        ),
+        LocalPeaks AS (
+            SELECT
+                wn.symbol,
+                wn.high,
+                wn.timestamp
+            FROM WeekNeighbors wn
+            JOIN ResistanceLevel rl ON wn.symbol = rl.symbol
+            WHERE
+                ABS(wn.high - rl.resistance_high) / rl.resistance_high <= 0.05
+                AND (wn.prev_high IS NULL OR wn.high > wn.prev_high)
+                AND (wn.next_high IS NULL OR wn.high > wn.next_high)
+        ),
+        ValidTouchCount AS (
+            SELECT symbol, COUNT(*) AS touch_count
+            FROM LocalPeaks
+            GROUP BY symbol
+            HAVING COUNT(*) BETWEEN 2 AND 5
+        ),
+        LatestWeek AS (
+            SELECT symbol, close AS latest_close
+            FROM RankedWeeks
+            WHERE rn = 1
+        )
+        SELECT
+            lw.symbol,
+            lw.latest_close,
+            rl.resistance_high,
+            ROUND((rl.resistance_high - lw.latest_close) / rl.resistance_high, 4) AS distance_to_resistance,
+            vtc.touch_count
+        FROM LatestWeek lw
+        JOIN ResistanceLevel rl ON lw.symbol = rl.symbol
+        JOIN ValidTouchCount vtc ON lw.symbol = vtc.symbol
+        WHERE
+            lw.latest_close < rl.resistance_high
+            AND (rl.resistance_high - lw.latest_close) / rl.resistance_high <= 0.05
+        ORDER BY distance_to_resistance ASC;
+    `).all();
+
+    db.close();
+    return summary;
+}
+
+
+getResistanceBreakoutCandidates4WeeksAgo() {
+  const dbFile = './db/stocks.db';
+  const db = new Database(dbFile);
+
+  const summary = db.prepare(`
+    WITH RankedWeeks AS (
+      SELECT
+        symbol,
+        timestamp,
+        high,
+        close,
+        ROW_NUMBER() OVER (PARTITION BY symbol ORDER BY timestamp DESC) AS rn
+      FROM stock_weekly
+    ),
+    LookbackWeeks AS (
+      SELECT symbol, timestamp, high, close
+      FROM RankedWeeks
+      WHERE rn <= 52
+    ),
+    ResistanceLevel AS (
+      SELECT
+        symbol,
+        MAX(high) AS resistance_high
+      FROM LookbackWeeks
+      GROUP BY symbol
+    ),
+    WeekNeighbors AS (
+      SELECT
+        lw.symbol,
+        lw.timestamp,
+        lw.high,
+        lw.close,
+        LAG(lw.high) OVER (PARTITION BY lw.symbol ORDER BY lw.timestamp) AS prev_high,
+        LEAD(lw.high) OVER (PARTITION BY lw.symbol ORDER BY lw.timestamp) AS next_high
+      FROM LookbackWeeks lw
+    ),
+    LocalPeaks AS (
+      SELECT
+        wn.symbol,
+        wn.high,
+        wn.timestamp
+      FROM WeekNeighbors wn
+      JOIN ResistanceLevel rl ON wn.symbol = rl.symbol
+      WHERE
+        ABS(wn.high - rl.resistance_high) / rl.resistance_high <= 0.05
+        AND (wn.prev_high IS NULL OR wn.high > wn.prev_high)
+        AND (wn.next_high IS NULL OR wn.high > wn.next_high)
+    ),
+    ValidTouchCount AS (
+      SELECT symbol, COUNT(*) AS touch_count
+      FROM LocalPeaks
+      GROUP BY symbol
+      HAVING COUNT(*) BETWEEN 2 AND 5
+    ),
+    FourWeeksAgo AS (
+      SELECT
+        symbol,
+        timestamp AS ts_4w_ago,
+        close AS close_4w_ago
+      FROM RankedWeeks
+      WHERE rn = 5
+    ),
+    LatestWeek AS (
+      SELECT
+        symbol,
+        close AS latest_close
+      FROM RankedWeeks
+      WHERE rn = 1
+    )
+    SELECT
+      f4.symbol,
+      datetime(f4.ts_4w_ago, 'unixepoch') AS buy_date,
+      f4.close_4w_ago AS price_4w_ago,
+      lw.latest_close,
+      ROUND((lw.latest_close - f4.close_4w_ago) / f4.close_4w_ago, 4) AS price_change_since_4w,
+      rl.resistance_high,
+      ROUND((rl.resistance_high - f4.close_4w_ago) / rl.resistance_high, 4) AS distance_to_resistance_4w_ago,
+      vtc.touch_count
+    FROM FourWeeksAgo f4
+    JOIN ResistanceLevel rl ON f4.symbol = rl.symbol
+    JOIN ValidTouchCount vtc ON f4.symbol = vtc.symbol
+    JOIN LatestWeek lw ON f4.symbol = lw.symbol
+    WHERE
+      f4.close_4w_ago < rl.resistance_high
+      AND (rl.resistance_high - f4.close_4w_ago) / rl.resistance_high <= 0.05
+    ORDER BY distance_to_resistance_4w_ago ASC;
+  `).all();
+
+  db.close();
+  return summary;
+}
 }
 
 module.exports = StockFilterService;

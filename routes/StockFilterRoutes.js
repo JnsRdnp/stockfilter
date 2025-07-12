@@ -99,11 +99,6 @@ router.get('/save-data-to-db', controller.saveDataToDb);
  *         required: false
  *         schema:
  *           type: string
- *       - in: query
- *         name: dbFile
- *         required: false
- *         schema:
- *           type: string
  *     responses:
  *       200:
  *         description: JSON data returned
@@ -144,12 +139,7 @@ router.get('/fetch-and-store-all-symbols', controller.fetchAndStoreAllSymbols);
  *     summary: getMomentumAndPullbackSummary (auto-generated route)
  *     tags:
  *       - Generated
- *     parameters:
- *       - in: query
- *         name: dbFile
- *         required: false
- *         schema:
- *           type: string
+
  *     responses:
  *       200:
  *         description: JSON data returned
@@ -167,12 +157,7 @@ router.get('/get-momentum-and-pullback-summary', controller.getMomentumAndPullba
  *     summary: getMomentumAndPullbackSummaryMV (auto-generated route)
  *     tags:
  *       - Generated
- *     parameters:
- *       - in: query
- *         name: dbFile
- *         required: false
- *         schema:
- *           type: string
+
  *     responses:
  *       200:
  *         description: JSON data returned
@@ -182,6 +167,60 @@ router.get('/get-momentum-and-pullback-summary', controller.getMomentumAndPullba
  *               type: object
  */
 router.get('/get-momentum-and-pullback-summary-mv', controller.getMomentumAndPullbackSummaryMV);
+
+/**
+ * @swagger
+ * /api/stockfilter/get-momentum-and-pullback-summary-mv4weeks-ago:
+ *   get:
+ *     summary: getMomentumAndPullbackSummaryMV4WeeksAgo (auto-generated route)
+ *     tags:
+ *       - Generated
+
+ *     responses:
+ *       200:
+ *         description: JSON data returned
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ */
+router.get('/get-momentum-and-pullback-summary-mv4weeks-ago', controller.getMomentumAndPullbackSummaryMV4WeeksAgo);
+
+/**
+ * @swagger
+ * /api/stockfilter/get-resistance-breakout-candidates:
+ *   get:
+ *     summary: getResistanceBreakoutCandidates (auto-generated route)
+ *     tags:
+ *       - Generated
+
+ *     responses:
+ *       200:
+ *         description: JSON data returned
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ */
+router.get('/get-resistance-breakout-candidates', controller.getResistanceBreakoutCandidates);
+
+/**
+ * @swagger
+ * /api/stockfilter/get-resistance-breakout-candidates4weeks-ago:
+ *   get:
+ *     summary: getResistanceBreakoutCandidates4WeeksAgo (auto-generated route)
+ *     tags:
+ *       - Generated
+
+ *     responses:
+ *       200:
+ *         description: JSON data returned
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ */
+router.get('/get-resistance-breakout-candidates4weeks-ago', controller.getResistanceBreakoutCandidates4WeeksAgo);
 
 
 module.exports = router;
