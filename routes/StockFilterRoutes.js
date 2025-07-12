@@ -22,14 +22,24 @@ router.get('/get-nasdaq-symbols', controller.getNasdaqSymbols);
 
 /**
  * @swagger
- * /api/stockfilter/get12month-return:
+ * /api/stockfilter/get-symboldata:
  *   get:
- *     summary: get12MonthReturn (auto-generated route)
+ *     summary: getSymboldata (auto-generated route)
  *     tags:
  *       - Generated
  *     parameters:
  *       - in: query
  *         name: symbol
+ *         required: false
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: interval
+ *         required: false
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: range
  *         required: false
  *         schema:
  *           type: string
@@ -41,25 +51,7 @@ router.get('/get-nasdaq-symbols', controller.getNasdaqSymbols);
  *             schema:
  *               type: object
  */
-router.get('/get12month-return', controller.get12MonthReturn);
-
-/**
- * @swagger
- * /api/stockfilter/main:
- *   get:
- *     summary: main (auto-generated route)
- *     tags:
- *       - Generated
-
- *     responses:
- *       200:
- *         description: JSON data returned
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- */
-router.get('/main', controller.main);
+router.get('/get-symboldata', controller.getSymboldata);
 
 
 module.exports = router;

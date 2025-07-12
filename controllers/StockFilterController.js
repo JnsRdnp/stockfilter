@@ -14,22 +14,13 @@ exports.getNasdaqSymbols = async (req, res) => {
   }
 };
 
-exports.get12MonthReturn = async (req, res) => {
+exports.getSymboldata = async (req, res) => {
   try {
     const symbol = req.query.symbol || '';
+    const interval = req.query.interval || '';
+    const range = req.query.range || '';
 
-    const result = await stockFilterService.get12MonthReturn(symbol);
-    res.json(result);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
-
-exports.main = async (req, res) => {
-  try {
-    // no params
-
-    const result = await stockFilterService.main();
+    const result = await stockFilterService.getSymbolData(symbol, interval, range);
     res.json(result);
   } catch (error) {
     res.status(500).json({ error: error.message });
