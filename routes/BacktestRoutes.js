@@ -20,6 +20,11 @@ const controller = require('../controllers/BacktestController.js');
  *         required: false
  *         schema:
  *           type: integer
+ *       - in: query
+ *         name: binsize
+ *         required: false
+ *         schema:
+ *           type: string
  *     responses:
  *       200:
  *         description: JSON data returned
@@ -48,6 +53,11 @@ router.get('/get-backtest-restricted', controller.getBacktestRestricted);
  *         required: false
  *         schema:
  *           type: integer
+ *       - in: query
+ *         name: binsize
+ *         required: false
+ *         schema:
+ *           type: string
  *     responses:
  *       200:
  *         description: JSON data returned
@@ -76,6 +86,11 @@ router.get('/get-backtest', controller.getBacktest);
  *         required: false
  *         schema:
  *           type: integer
+ *       - in: query
+ *         name: binsize
+ *         required: false
+ *         schema:
+ *           type: string
  *     responses:
  *       200:
  *         description: JSON data returned
@@ -104,6 +119,11 @@ router.get('/get-backtest6m-restricted', controller.getBacktest6mRestricted);
  *         required: false
  *         schema:
  *           type: integer
+ *       - in: query
+ *         name: binsize
+ *         required: false
+ *         schema:
+ *           type: string
  *     responses:
  *       200:
  *         description: JSON data returned
@@ -231,6 +251,11 @@ router.get('/get-range', controller.getRange);
  *         required: false
  *         schema:
  *           type: integer
+ *       - in: query
+ *         name: binsize
+ *         required: false
+ *         schema:
+ *           type: string
  *     responses:
  *       200:
  *         description: JSON data returned

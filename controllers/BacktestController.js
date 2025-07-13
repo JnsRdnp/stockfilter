@@ -7,8 +7,9 @@ exports.getBacktestRestricted = async (req, res) => {
   try {
     const maxNegRatio = req.query.maxNegRatio || '';
     const minStockCount = parseInt(req.query.minStockCount) || 0;
+    const binsize = req.query.binsize || '';
 
-    const result = await backtestService.getBacktestRestricted(maxNegRatio, minStockCount);
+    const result = await backtestService.getBacktestRestricted(maxNegRatio, minStockCount, binsize);
     res.json(result);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -19,8 +20,9 @@ exports.getBacktest = async (req, res) => {
   try {
     const maxNegRatio = req.query.maxNegRatio || '';
     const minStockCount = parseInt(req.query.minStockCount) || 0;
+    const binsize = req.query.binsize || '';
 
-    const result = await backtestService.getBacktest(maxNegRatio, minStockCount);
+    const result = await backtestService.getBacktest(maxNegRatio, minStockCount, binsize);
     res.json(result);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -31,8 +33,9 @@ exports.getBacktest6mRestricted = async (req, res) => {
   try {
     const maxNegRatio = req.query.maxNegRatio || '';
     const minStockCount = parseInt(req.query.minStockCount) || 0;
+    const binsize = req.query.binsize || '';
 
-    const result = await backtestService.getBacktest6mRestricted(maxNegRatio, minStockCount);
+    const result = await backtestService.getBacktest6mRestricted(maxNegRatio, minStockCount, binsize);
     res.json(result);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -43,8 +46,9 @@ exports.getBacktest6m = async (req, res) => {
   try {
     const maxNegRatio = req.query.maxNegRatio || '';
     const minStockCount = parseInt(req.query.minStockCount) || 0;
+    const binsize = req.query.binsize || '';
 
-    const result = await backtestService.getBacktest6m(maxNegRatio, minStockCount);
+    const result = await backtestService.getBacktest6m(maxNegRatio, minStockCount, binsize);
     res.json(result);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -94,8 +98,9 @@ exports.analyzeStocks = async (req, res) => {
     const maxNegRatio = req.query.maxNegRatio || '';
     const weeksAgo = req.query.weeksAgo || '';
     const minStockCount = parseInt(req.query.minStockCount) || 0;
+    const binsize = req.query.binsize || '';
 
-    const result = await backtestService.analyzeStocks(stocks, maxNegRatio, weeksAgo, minStockCount);
+    const result = await backtestService.analyzeStocks(stocks, maxNegRatio, weeksAgo, minStockCount, binsize);
     res.json(result);
   } catch (error) {
     res.status(500).json({ error: error.message });
