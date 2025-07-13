@@ -70,39 +70,6 @@ router.get('/get-backtest', controller.getBacktest);
 
 /**
  * @swagger
- * /api/backtest/get-backtest-withoutvol:
- *   get:
- *     summary: getBacktestWithoutvol (auto-generated route)
- *     tags:
- *       - backtest
- *     parameters:
- *       - in: query
- *         name: maxNegRatio
- *         required: false
- *         schema:
- *           type: string
- *       - in: query
- *         name: minStockCount
- *         required: false
- *         schema:
- *           type: integer
- *       - in: query
- *         name: binsize
- *         required: false
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: JSON data returned
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- */
-router.get('/get-backtest-withoutvol', controller.getBacktestWithoutvol);
-
-/**
- * @swagger
  * /api/backtest/get-backtest6m-restricted:
  *   get:
  *     summary: getBacktest6mRestricted (auto-generated route)
@@ -169,6 +136,148 @@ router.get('/get-backtest6m', controller.getBacktest6m);
 
 /**
  * @swagger
+ * /api/backtest/get-momentum-and-pullback-summary-mvxweeks-ago:
+ *   get:
+ *     summary: getMomentumAndPullbackSummaryMVXWeeksAgo (auto-generated route)
+ *     tags:
+ *       - backtest
+ *     parameters:
+ *       - in: query
+ *         name: xWeeksAgo
+ *         required: false
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: JSON data returned
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ */
+router.get('/get-momentum-and-pullback-summary-mvxweeks-ago', controller.getMomentumAndPullbackSummaryMVXWeeksAgo);
+
+/**
+ * @swagger
+ * /api/backtest/get-yearly-backtest:
+ *   get:
+ *     summary: getYearlyBacktest (auto-generated route)
+ *     tags:
+ *       - backtest
+ *     parameters:
+ *       - in: query
+ *         name: maxNegRatio
+ *         required: false
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: minStockCount
+ *         required: false
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: binsize
+ *         required: false
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: useVolatility
+ *         required: false
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: JSON data returned
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ */
+router.get('/get-yearly-backtest', controller.getYearlyBacktest);
+
+/**
+ * @swagger
+ * /api/backtest/analyze-stocks-for-single-month:
+ *   get:
+ *     summary: analyzeStocksForSingleMonth (auto-generated route)
+ *     tags:
+ *       - backtest
+ *     parameters:
+ *       - in: query
+ *         name: stocks
+ *         required: false
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: weeksAgo
+ *         required: false
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: binsize
+ *         required: false
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: useVolatility
+ *         required: false
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: sortBySharpe
+ *         required: false
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: minStockCount
+ *         required: false
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: maxNegRatio
+ *         required: false
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: JSON data returned
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ */
+router.get('/analyze-stocks-for-single-month', controller.analyzeStocksForSingleMonth);
+
+/**
+ * @swagger
+ * /api/backtest/analyze-stocks-across-year:
+ *   get:
+ *     summary: analyzeStocksAcrossYear (auto-generated route)
+ *     tags:
+ *       - backtest
+ *     parameters:
+ *       - in: query
+ *         name: allGroups
+ *         required: false
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: useVolatility
+ *         required: false
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: JSON data returned
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ */
+router.get('/analyze-stocks-across-year', controller.analyzeStocksAcrossYear);
+
+/**
+ * @swagger
  * /api/backtest/get-quartile-bins:
  *   get:
  *     summary: getQuartileBins (auto-generated route)
@@ -197,14 +306,14 @@ router.get('/get-quartile-bins', controller.getQuartileBins);
 
 /**
  * @swagger
- * /api/backtest/get-min-max:
+ * /api/backtest/map:
  *   get:
- *     summary: getMinMax (auto-generated route)
+ *     summary: map (auto-generated route)
  *     tags:
  *       - backtest
  *     parameters:
  *       - in: query
- *         name: values
+ *         name: val
  *         required: false
  *         schema:
  *           type: string
@@ -216,7 +325,7 @@ router.get('/get-quartile-bins', controller.getQuartileBins);
  *             schema:
  *               type: object
  */
-router.get('/get-min-max', controller.getMinMax);
+router.get('/map', controller.map);
 
 /**
  * @swagger
@@ -258,34 +367,14 @@ router.get('/get-range', controller.getRange);
 
 /**
  * @swagger
- * /api/backtest/analyze-stocks:
+ * /api/backtest/get-min-max:
  *   get:
- *     summary: analyzeStocks (auto-generated route)
+ *     summary: getMinMax (auto-generated route)
  *     tags:
  *       - backtest
  *     parameters:
  *       - in: query
- *         name: stocks
- *         required: false
- *         schema:
- *           type: string
- *       - in: query
- *         name: maxNegRatio
- *         required: false
- *         schema:
- *           type: string
- *       - in: query
- *         name: weeksAgo
- *         required: false
- *         schema:
- *           type: string
- *       - in: query
- *         name: minStockCount
- *         required: false
- *         schema:
- *           type: integer
- *       - in: query
- *         name: binsize
+ *         name: values
  *         required: false
  *         schema:
  *           type: string
@@ -297,50 +386,7 @@ router.get('/get-range', controller.getRange);
  *             schema:
  *               type: object
  */
-router.get('/analyze-stocks', controller.analyzeStocks);
-
-/**
- * @swagger
- * /api/backtest/analyze-stocks-withoutvol:
- *   get:
- *     summary: analyzeStocksWithoutvol (auto-generated route)
- *     tags:
- *       - backtest
- *     parameters:
- *       - in: query
- *         name: stocks
- *         required: false
- *         schema:
- *           type: string
- *       - in: query
- *         name: maxNegRatio
- *         required: false
- *         schema:
- *           type: string
- *       - in: query
- *         name: weeksAgo
- *         required: false
- *         schema:
- *           type: string
- *       - in: query
- *         name: minStockCount
- *         required: false
- *         schema:
- *           type: integer
- *       - in: query
- *         name: binsize
- *         required: false
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: JSON data returned
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- */
-router.get('/analyze-stocks-withoutvol', controller.analyzeStocksWithoutvol);
+router.get('/get-min-max', controller.getMinMax);
 
 
 module.exports = router;

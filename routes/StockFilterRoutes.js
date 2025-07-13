@@ -402,6 +402,34 @@ router.get('/average', controller.average);
 
 /**
  * @swagger
+ * /api/stockfilter/get-momentum-and-pullback-summary-by-xweeks-ago:
+ *   get:
+ *     summary: getMomentumAndPullbackSummaryByXWeeksAgo (auto-generated route)
+ *     tags:
+ *       - stockfilter
+ *     parameters:
+ *       - in: query
+ *         name: xWeeksAgo
+ *         required: false
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: preview
+ *         required: false
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: JSON data returned
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ */
+router.get('/get-momentum-and-pullback-summary-by-xweeks-ago', controller.getMomentumAndPullbackSummaryByXWeeksAgo);
+
+/**
+ * @swagger
  * /api/stockfilter/get-momentum-and-pullback-summary-mv4weeks-ago-nonrestrcted:
  *   get:
  *     summary: getMomentumAndPullbackSummaryMV4WeeksAgoNONRESTRCTED (auto-generated route)

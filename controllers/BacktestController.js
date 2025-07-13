@@ -29,19 +29,6 @@ exports.getBacktest = async (req, res) => {
   }
 };
 
-exports.getBacktestWithoutvol = async (req, res) => {
-  try {
-    const maxNegRatio = req.query.maxNegRatio || '';
-    const minStockCount = parseInt(req.query.minStockCount) || 0;
-    const binsize = req.query.binsize || '';
-
-    const result = await backtestService.getBacktestWithoutvol(maxNegRatio, minStockCount, binsize);
-    res.json(result);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
-
 exports.getBacktest6mRestricted = async (req, res) => {
   try {
     const maxNegRatio = req.query.maxNegRatio || '';
@@ -68,6 +55,60 @@ exports.getBacktest6m = async (req, res) => {
   }
 };
 
+exports.getMomentumAndPullbackSummaryMVXWeeksAgo = async (req, res) => {
+  try {
+    const xWeeksAgo = req.query.xWeeksAgo || '';
+
+    const result = await backtestService.getMomentumAndPullbackSummaryMVXWeeksAgo(xWeeksAgo);
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.getYearlyBacktest = async (req, res) => {
+  try {
+    const maxNegRatio = req.query.maxNegRatio || '';
+    const minStockCount = parseInt(req.query.minStockCount) || 0;
+    const binsize = req.query.binsize || '';
+    const useVolatility = req.query.useVolatility || '';
+
+    const result = await backtestService.getYearlyBacktest(maxNegRatio, minStockCount, binsize, useVolatility);
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.analyzeStocksForSingleMonth = async (req, res) => {
+  try {
+    const stocks = req.query.stocks || '';
+    const weeksAgo = req.query.weeksAgo || '';
+    const binsize = req.query.binsize || '';
+    const useVolatility = req.query.useVolatility || '';
+    const sortBySharpe = req.query.sortBySharpe || '';
+    const minStockCount = parseInt(req.query.minStockCount) || 0;
+    const maxNegRatio = req.query.maxNegRatio || '';
+
+    const result = await backtestService.analyzeStocksForSingleMonth(stocks, weeksAgo, binsize, useVolatility, sortBySharpe, minStockCount, maxNegRatio);
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.analyzeStocksAcrossYear = async (req, res) => {
+  try {
+    const allGroups = req.query.allGroups || '';
+    const useVolatility = req.query.useVolatility || '';
+
+    const result = await backtestService.analyzeStocksAcrossYear(allGroups, useVolatility);
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 exports.getQuartileBins = async (req, res) => {
   try {
     const values = req.query.values || '';
@@ -80,11 +121,11 @@ exports.getQuartileBins = async (req, res) => {
   }
 };
 
-exports.getMinMax = async (req, res) => {
+exports.map = async (req, res) => {
   try {
-    const values = req.query.values || '';
+    const val = req.query.val || '';
 
-    const result = await backtestService.getMinMax(values);
+    const result = await backtestService.map(val);
     res.json(result);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -105,30 +146,11 @@ exports.getRange = async (req, res) => {
   }
 };
 
-exports.analyzeStocks = async (req, res) => {
+exports.getMinMax = async (req, res) => {
   try {
-    const stocks = req.query.stocks || '';
-    const maxNegRatio = req.query.maxNegRatio || '';
-    const weeksAgo = req.query.weeksAgo || '';
-    const minStockCount = parseInt(req.query.minStockCount) || 0;
-    const binsize = req.query.binsize || '';
+    const values = req.query.values || '';
 
-    const result = await backtestService.analyzeStocks(stocks, maxNegRatio, weeksAgo, minStockCount, binsize);
-    res.json(result);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
-
-exports.analyzeStocksWithoutvol = async (req, res) => {
-  try {
-    const stocks = req.query.stocks || '';
-    const maxNegRatio = req.query.maxNegRatio || '';
-    const weeksAgo = req.query.weeksAgo || '';
-    const minStockCount = parseInt(req.query.minStockCount) || 0;
-    const binsize = req.query.binsize || '';
-
-    const result = await backtestService.analyzeStocksWithoutvol(stocks, maxNegRatio, weeksAgo, minStockCount, binsize);
+    const result = await backtestService.getMinMax(values);
     res.json(result);
   } catch (error) {
     res.status(500).json({ error: error.message });

@@ -167,24 +167,14 @@ exports.getMomentumAndPullbackSummaryMV24WeeksAgoNONRESTRICTED = async (req, res
 
 exports.getFilteredMomentumSummary = async (req, res) => {
   try {
-    const {
-      minMomentum = '',
-      maxMomentum = '',
-      minPullback = '',
-      maxPullback = '',
-      minVolatility = '',
-      maxVolatility = ''
-    } = req.query;
+    const minMomentum = req.query.minMomentum || '';
+    const maxMomentum = req.query.maxMomentum || '';
+    const minPullback = req.query.minPullback || '';
+    const maxPullback = req.query.maxPullback || '';
+    const minVolatility = req.query.minVolatility || '';
+    const maxVolatility = req.query.maxVolatility || '';
 
-    const result = await stockFilterService.getFilteredMomentumSummary({
-      minMomentum,
-      maxMomentum,
-      minPullback,
-      maxPullback,
-      minVolatility,
-      maxVolatility
-    });
-
+    const result = await stockFilterService.getFilteredMomentumSummary(minMomentum, maxMomentum, minPullback, maxPullback, minVolatility, maxVolatility);
     res.json(result);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -196,6 +186,23 @@ exports.average = async (req, res) => {
     const arr = req.query.arr || '';
 
     const result = await stockFilterService.average(arr);
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.getMomentumAndPullbackSummaryByXWeeksAgo = async (req, res) => {
+  try {
+    const xWeeksAgo = req.query.xWeeksAgo || '';
+    const preview = req.query.preview === 'true'; 
+
+    const result = await stockFilterService.getMomentumAndPullbackSummaryByXWeeksAgo(xWeeksAgo);
+
+    if (preview) {
+      return res.json(result.slice(0, 10));
+    }
+
     res.json(result);
   } catch (error) {
     res.status(500).json({ error: error.message });

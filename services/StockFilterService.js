@@ -748,6 +748,109 @@ average(arr) {
   return arr.reduce((a, b) => a + b, 0) / arr.length;
 }
 
+async getMomentumAndPullbackSummaryByXWeeksAgo(xWeeksAgo) {
+  const xWeeks = parseInt(xWeeksAgo, 10);
+
+  if (isNaN(xWeeks) || xWeeks < 4) {
+    throw new Error('xWeeksAgo must be a valid number >= 4');
+  }
+
+  const xPlus1 = xWeeks + 1;
+  const xPlus1Plus52 = xWeeks + 1 + 52;
+  const xMinus4 = xWeeks - 4;
+
+  const dbFile = './db/stocks.db';
+  const db = new Database(dbFile);
+
+  const stmt = db.prepare(`
+    WITH Ordered AS (
+      SELECT
+        symbol,
+        timestamp,
+        close,
+        ROW_NUMBER() OVER (PARTITION BY symbol ORDER BY timestamp DESC) - 1 AS offset
+      FROM stock_weeklytwoyear
+    ),
+    BuyData AS (
+      SELECT symbol, close AS buy_price, timestamp AS buy_date
+      FROM Ordered
+      WHERE offset = @x
+    ),
+    WeekBeforeBuy AS (
+      SELECT symbol, close AS close_before_buy
+      FROM Ordered
+      WHERE offset = @xPlus1
+    ),
+    MomentumBase AS (
+      SELECT symbol, close AS close_52w_ago
+      FROM Ordered
+      WHERE offset = @xPlus1Plus52
+    ),
+    FuturePrice AS (
+      SELECT symbol, close AS sell_price
+      FROM Ordered
+      WHERE offset = @xMinus4
+    ),
+    VolatilityWindow AS (
+      SELECT
+        symbol,
+        ((close * 1.0 / LAG(close) OVER (PARTITION BY symbol ORDER BY offset)) - 1) AS weekly_return
+      FROM Ordered
+      WHERE offset BETWEEN @xPlus1 AND @xPlus1Plus52
+    ),
+    AvgReturns AS (
+      SELECT
+        symbol,
+        AVG(weekly_return) AS avg_return
+      FROM VolatilityWindow
+      WHERE weekly_return IS NOT NULL
+      GROUP BY symbol
+    ),
+    VolatilityStats AS (
+      SELECT
+        vw.symbol,
+        ar.avg_return,
+        SQRT(AVG(POWER(vw.weekly_return - ar.avg_return, 2))) AS stddev_weekly_return
+      FROM VolatilityWindow vw
+      JOIN AvgReturns ar ON vw.symbol = ar.symbol
+      WHERE vw.weekly_return IS NOT NULL
+      GROUP BY vw.symbol
+    )
+    SELECT
+      b.symbol,
+      b.buy_date,
+      b.buy_price,
+      wb.close_before_buy,
+      m.close_52w_ago,
+      f.sell_price,
+      ar.avg_return AS avg_abs_weekly_return,
+      vs.stddev_weekly_return AS yearly_volatility,
+      (wb.close_before_buy * 1.0 / m.close_52w_ago) - 1 AS yearly_momentum,
+      (b.buy_price * 1.0 / wb.close_before_buy) - 1 AS pullback_${xWeeksAgo}w_ago,
+      ROUND(((f.sell_price - b.buy_price) * 100.0 / b.buy_price), 2) AS profit_4w_later_percent
+    FROM BuyData b
+    JOIN WeekBeforeBuy wb ON b.symbol = wb.symbol
+    JOIN MomentumBase m ON b.symbol = m.symbol
+    JOIN FuturePrice f ON b.symbol = f.symbol
+    LEFT JOIN AvgReturns ar ON b.symbol = ar.symbol
+    LEFT JOIN VolatilityStats vs ON b.symbol = vs.symbol
+    WHERE
+      b.buy_price IS NOT NULL AND
+      wb.close_before_buy IS NOT NULL AND
+      m.close_52w_ago IS NOT NULL AND
+      f.sell_price IS NOT NULL;
+  `);
+
+  const result = stmt.all({
+    x: xWeeks,
+    xPlus1,
+    xPlus1Plus52,
+    xMinus4
+  });
+
+  db.close();
+  return result;
+}
 
 async getMomentumAndPullbackSummaryMV4WeeksAgoNONRESTRCTED() {
   const dbFile = './db/stocks.db';
