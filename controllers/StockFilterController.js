@@ -27,6 +27,19 @@ exports.getSymbolData = async (req, res) => {
   }
 };
 
+exports.getSymbolData2y = async (req, res) => {
+  try {
+    const symbol = req.query.symbol || '';
+    const interval = req.query.interval || '';
+    const range = req.query.range || '';
+
+    const result = await stockFilterService.getSymbolData2y(symbol, interval, range);
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 exports.saveDataToDb = async (req, res) => {
   try {
     const dbFile = req.query.dbFile || '';
@@ -34,6 +47,19 @@ exports.saveDataToDb = async (req, res) => {
     const data = req.query.data || '';
 
     const result = await stockFilterService.saveDataToDb(dbFile, symbol, data);
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.saveDataToDb2y = async (req, res) => {
+  try {
+    const dbFile = req.query.dbFile || '';
+    const symbol = req.query.symbol || '';
+    const data = req.query.data || '';
+
+    const result = await stockFilterService.saveDataToDb2y(dbFile, symbol, data);
     res.json(result);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -62,6 +88,17 @@ exports.fetchAndStoreAllSymbols = async (req, res) => {
   }
 };
 
+exports.fetchAndStoreAllSymbols2year = async (req, res) => {
+  try {
+    const dbFile = req.query.dbFile || '';
+
+    const result = await stockFilterService.fetchAndStoreAllSymbols2year(dbFile);
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 exports.getMomentumAndPullbackSummary = async (req, res) => {
   try {
     // no params
@@ -84,11 +121,55 @@ exports.getMomentumAndPullbackSummaryMV = async (req, res) => {
   }
 };
 
+exports.getMomentumAndPullbackSummaryMVOPTIMIZED = async (req, res) => {
+  try {
+    // no params
+
+    const result = await stockFilterService.getMomentumAndPullbackSummaryMVOPTIMIZED();
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 exports.getMomentumAndPullbackSummaryMV4WeeksAgo = async (req, res) => {
   try {
     // no params
 
     const result = await stockFilterService.getMomentumAndPullbackSummaryMV4WeeksAgo();
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.getMomentumAndPullbackSummaryMV24WeeksAgo = async (req, res) => {
+  try {
+    // no params
+
+    const result = await stockFilterService.getMomentumAndPullbackSummaryMV24WeeksAgo();
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.getMomentumAndPullbackSummaryMV24WeeksAgoNONRESTRICTED = async (req, res) => {
+  try {
+    // no params
+
+    const result = await stockFilterService.getMomentumAndPullbackSummaryMV24WeeksAgoNONRESTRICTED();
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.getMomentumAndPullbackSummaryMV4WeeksAgoNONRESTRCTED = async (req, res) => {
+  try {
+    // no params
+
+    const result = await stockFilterService.getMomentumAndPullbackSummaryMV4WeeksAgoNONRESTRCTED();
     res.json(result);
   } catch (error) {
     res.status(500).json({ error: error.message });

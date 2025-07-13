@@ -25,6 +25,7 @@
     "chai-http": "^5.1.2",
     "csv-parse": "^6.0.0",
     "express": "^5.1.0",
+    "lodash": "^4.17.21",
     "node-fetch": "^3.3.2",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",

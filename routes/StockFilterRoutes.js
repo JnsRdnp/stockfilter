@@ -8,7 +8,7 @@ const controller = require('../controllers/StockFilterController.js');
  *   get:
  *     summary: getNasdaqSymbols (auto-generated route)
  *     tags:
- *       - Generated
+ *       - stockfilter
 
  *     responses:
  *       200:
@@ -26,7 +26,7 @@ router.get('/get-nasdaq-symbols', controller.getNasdaqSymbols);
  *   get:
  *     summary: getSymbolData (auto-generated route)
  *     tags:
- *       - Generated
+ *       - stockfilter
  *     parameters:
  *       - in: query
  *         name: symbol
@@ -55,11 +55,44 @@ router.get('/get-symbol-data', controller.getSymbolData);
 
 /**
  * @swagger
+ * /api/stockfilter/get-symbol-data2y:
+ *   get:
+ *     summary: getSymbolData2y (auto-generated route)
+ *     tags:
+ *       - stockfilter
+ *     parameters:
+ *       - in: query
+ *         name: symbol
+ *         required: false
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: interval
+ *         required: false
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: range
+ *         required: false
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: JSON data returned
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ */
+router.get('/get-symbol-data2y', controller.getSymbolData2y);
+
+/**
+ * @swagger
  * /api/stockfilter/save-data-to-db:
  *   get:
  *     summary: saveDataToDb (auto-generated route)
  *     tags:
- *       - Generated
+ *       - stockfilter
  *     parameters:
  *       - in: query
  *         name: dbFile
@@ -88,11 +121,44 @@ router.get('/save-data-to-db', controller.saveDataToDb);
 
 /**
  * @swagger
+ * /api/stockfilter/save-data-to-db2y:
+ *   get:
+ *     summary: saveDataToDb2y (auto-generated route)
+ *     tags:
+ *       - stockfilter
+ *     parameters:
+ *       - in: query
+ *         name: dbFile
+ *         required: false
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: symbol
+ *         required: false
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: data
+ *         required: false
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: JSON data returned
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ */
+router.get('/save-data-to-db2y', controller.saveDataToDb2y);
+
+/**
+ * @swagger
  * /api/stockfilter/fetch-and-store:
  *   get:
  *     summary: fetchAndStore (auto-generated route)
  *     tags:
- *       - Generated
+ *       - stockfilter
  *     parameters:
  *       - in: query
  *         name: symbol
@@ -115,7 +181,7 @@ router.get('/fetch-and-store', controller.fetchAndStore);
  *   get:
  *     summary: fetchAndStoreAllSymbols (auto-generated route)
  *     tags:
- *       - Generated
+ *       - stockfilter
  *     parameters:
  *       - in: query
  *         name: dbFile
@@ -134,11 +200,34 @@ router.get('/fetch-and-store-all-symbols', controller.fetchAndStoreAllSymbols);
 
 /**
  * @swagger
+ * /api/stockfilter/fetch-and-store-all-symbols2year:
+ *   get:
+ *     summary: fetchAndStoreAllSymbols2year (auto-generated route)
+ *     tags:
+ *       - stockfilter
+ *     parameters:
+ *       - in: query
+ *         name: dbFile
+ *         required: false
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: JSON data returned
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ */
+router.get('/fetch-and-store-all-symbols2year', controller.fetchAndStoreAllSymbols2year);
+
+/**
+ * @swagger
  * /api/stockfilter/get-momentum-and-pullback-summary:
  *   get:
  *     summary: getMomentumAndPullbackSummary (auto-generated route)
  *     tags:
- *       - Generated
+ *       - stockfilter
 
  *     responses:
  *       200:
@@ -156,7 +245,7 @@ router.get('/get-momentum-and-pullback-summary', controller.getMomentumAndPullba
  *   get:
  *     summary: getMomentumAndPullbackSummaryMV (auto-generated route)
  *     tags:
- *       - Generated
+ *       - stockfilter
 
  *     responses:
  *       200:
@@ -170,11 +259,29 @@ router.get('/get-momentum-and-pullback-summary-mv', controller.getMomentumAndPul
 
 /**
  * @swagger
+ * /api/stockfilter/get-momentum-and-pullback-summary-mvoptimized:
+ *   get:
+ *     summary: getMomentumAndPullbackSummaryMVOPTIMIZED (auto-generated route)
+ *     tags:
+ *       - stockfilter
+
+ *     responses:
+ *       200:
+ *         description: JSON data returned
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ */
+router.get('/get-momentum-and-pullback-summary-mvoptimized', controller.getMomentumAndPullbackSummaryMVOPTIMIZED);
+
+/**
+ * @swagger
  * /api/stockfilter/get-momentum-and-pullback-summary-mv4weeks-ago:
  *   get:
  *     summary: getMomentumAndPullbackSummaryMV4WeeksAgo (auto-generated route)
  *     tags:
- *       - Generated
+ *       - stockfilter
 
  *     responses:
  *       200:
@@ -188,11 +295,65 @@ router.get('/get-momentum-and-pullback-summary-mv4weeks-ago', controller.getMome
 
 /**
  * @swagger
+ * /api/stockfilter/get-momentum-and-pullback-summary-mv24weeks-ago:
+ *   get:
+ *     summary: getMomentumAndPullbackSummaryMV24WeeksAgo (auto-generated route)
+ *     tags:
+ *       - stockfilter
+
+ *     responses:
+ *       200:
+ *         description: JSON data returned
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ */
+router.get('/get-momentum-and-pullback-summary-mv24weeks-ago', controller.getMomentumAndPullbackSummaryMV24WeeksAgo);
+
+/**
+ * @swagger
+ * /api/stockfilter/get-momentum-and-pullback-summary-mv24weeks-ago-nonrestricted:
+ *   get:
+ *     summary: getMomentumAndPullbackSummaryMV24WeeksAgoNONRESTRICTED (auto-generated route)
+ *     tags:
+ *       - stockfilter
+
+ *     responses:
+ *       200:
+ *         description: JSON data returned
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ */
+router.get('/get-momentum-and-pullback-summary-mv24weeks-ago-nonrestricted', controller.getMomentumAndPullbackSummaryMV24WeeksAgoNONRESTRICTED);
+
+/**
+ * @swagger
+ * /api/stockfilter/get-momentum-and-pullback-summary-mv4weeks-ago-nonrestrcted:
+ *   get:
+ *     summary: getMomentumAndPullbackSummaryMV4WeeksAgoNONRESTRCTED (auto-generated route)
+ *     tags:
+ *       - stockfilter
+
+ *     responses:
+ *       200:
+ *         description: JSON data returned
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ */
+router.get('/get-momentum-and-pullback-summary-mv4weeks-ago-nonrestrcted', controller.getMomentumAndPullbackSummaryMV4WeeksAgoNONRESTRCTED);
+
+/**
+ * @swagger
  * /api/stockfilter/get-resistance-breakout-candidates:
  *   get:
  *     summary: getResistanceBreakoutCandidates (auto-generated route)
  *     tags:
- *       - Generated
+ *       - stockfilter
 
  *     responses:
  *       200:
@@ -210,7 +371,7 @@ router.get('/get-resistance-breakout-candidates', controller.getResistanceBreako
  *   get:
  *     summary: getResistanceBreakoutCandidates4WeeksAgo (auto-generated route)
  *     tags:
- *       - Generated
+ *       - stockfilter
 
  *     responses:
  *       200:

@@ -48,6 +48,19 @@ class StockFilterService {
     }
   }
 
+  async getSymbolData2y(symbol = 'AAPL', interval = '5d', range = '2y') {
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}`;
+    try {
+      const response = await axios.get(url, {
+        params: { interval, range },
+      });
+      return response.data.chart.result[0]; // raw JSON from Yahoo
+    } catch (error) {
+      console.error(`Error fetching data for ${symbol}:`, error.message);
+      return null;
+    }
+  }
+
   async saveDataToDb(dbFile, symbol, data) {
     try {
       // Make sure directory for dbFile exists before this in your app
@@ -72,6 +85,57 @@ class StockFilterService {
 
       const insertStmt = db.prepare(`
         INSERT OR IGNORE INTO stock_weekly (symbol, timestamp, open, high, low, close, volume)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+      `);
+
+      const insertMany = db.transaction((timestamps, quotes) => {
+        for (let i = 0; i < timestamps.length; i++) {
+          insertStmt.run(
+            symbol,
+            timestamps[i],
+            quotes.open[i],
+            quotes.high[i],
+            quotes.low[i],
+            quotes.close[i],
+            quotes.volume[i]
+          );
+        }
+      });
+
+      const quotes = data.indicators.quote[0];
+      insertMany(data.timestamp, quotes);
+
+      console.log(`Data for ${symbol} saved to DB successfully.`);
+      db.close();
+    } catch (err) {
+      console.error('SQLite error:', err);
+    }
+  }
+
+    async saveDataToDb2y(dbFile, symbol, data) {
+    try {
+      // Make sure directory for dbFile exists before this in your app
+      // e.g. fs.mkdirSync(path.dirname(dbFile), { recursive: true })
+
+      // Open or create database file from parameter
+      const db = new Database(dbFile);
+
+      // Create table if it doesn't exist
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS stock_weeklytwoyear (
+          symbol TEXT,
+          timestamp INTEGER,
+          open REAL,
+          high REAL,
+          low REAL,
+          close REAL,
+          volume INTEGER,
+          PRIMARY KEY(symbol, timestamp)
+        );
+      `);
+
+      const insertStmt = db.prepare(`
+        INSERT OR IGNORE INTO stock_weeklytwoyear (symbol, timestamp, open, high, low, close, volume)
         VALUES (?, ?, ?, ?, ?, ?, ?)
       `);
 
@@ -127,75 +191,94 @@ class StockFilterService {
     console.log('All symbols processed.');
   }
 
+
+  async fetchAndStoreAllSymbols2year(dbFile = './db/stocks.db') {
+    const symbols = await this.getNasdaqSymbols();
+
+    console.log(`Fetched ${symbols.length} symbols.`);
+
+    for (const symbol of symbols) {
+      console.log(`Processing symbol: ${symbol}`);
+      const data = await this.getSymbolData2y(symbol);
+      if (data) {
+        await this.saveDataToDb2y(dbFile, symbol, data);
+      } else {
+        console.warn(`No data fetched for symbol ${symbol}, skipping DB save.`);
+      }
+    }
+
+    console.log('All symbols processed.');
+  }
+
   getMomentumAndPullbackSummary() {
-      const dbFile = './db/stocks.db'
-      const db = new Database(dbFile);
+    const dbFile = './db/stocks.db'
+    const db = new Database(dbFile);
 
-      const summary = db.prepare(`
-          WITH RankedWeeks AS (
-          SELECT
-              symbol,
-              timestamp,
-              close,
-              ROW_NUMBER() OVER (PARTITION BY symbol ORDER BY timestamp DESC) AS rn
-          FROM stock_weekly
-          ),
-          LatestWeek AS (
-          SELECT
-              symbol,
-              timestamp AS latest_timestamp,
-              close AS close_latest
-          FROM RankedWeeks
-          WHERE rn = 1
-          ),
-          Week52Ago AS (
-          SELECT
-              symbol,
-              timestamp AS ts_52w_ago,
-              close AS close_52w_ago
-          FROM RankedWeeks
-          WHERE rn = 52
-          ),
-          WeekBeforeLatest AS (
-          SELECT
-              symbol,
-              timestamp AS ts_before_latest,
-              close AS close_before_latest
-          FROM RankedWeeks
-          WHERE rn = 2
-          ),
-          WeeklyReturns AS (
-          SELECT
-              symbol,
-              (close * 1.0 / LAG(close) OVER (PARTITION BY symbol ORDER BY timestamp) - 1) AS weekly_return
-          FROM stock_weekly
-          WHERE timestamp IS NOT NULL
-          ),
-          Volatility AS (
-          SELECT
-              symbol,
-              AVG(ABS(weekly_return)) AS avg_abs_weekly_return
-          FROM WeeklyReturns
-          GROUP BY symbol
-          )
-          SELECT
-          lw.symbol,
-          (wbl.close_before_latest * 1.0 / w52.close_52w_ago) - 1 AS yearly_momentum,
-          (lw.close_latest * 1.0 / wbl.close_before_latest) - 1 AS latest_week_pullback,
-          v.avg_abs_weekly_return AS avg_weekly_volatility
-          FROM LatestWeek lw
-          JOIN WeekBeforeLatest wbl ON lw.symbol = wbl.symbol
-          JOIN Week52Ago w52 ON lw.symbol = w52.symbol
-          JOIN Volatility v ON lw.symbol = v.symbol
-          WHERE
-          (wbl.close_before_latest * 1.0 / w52.close_52w_ago) - 1 > 0
-          AND (lw.close_latest * 1.0 / wbl.close_before_latest) - 1 BETWEEN -0.05 AND -0.01
-          AND v.avg_abs_weekly_return < 0.07 -- adjust this threshold for "stable"
-          ORDER BY yearly_momentum DESC;
-      `).all();
+    const summary = db.prepare(`
+        WITH RankedWeeks AS (
+        SELECT
+            symbol,
+            timestamp,
+            close,
+            ROW_NUMBER() OVER (PARTITION BY symbol ORDER BY timestamp DESC) AS rn
+        FROM stock_weekly
+        ),
+        LatestWeek AS (
+        SELECT
+            symbol,
+            timestamp AS latest_timestamp,
+            close AS close_latest
+        FROM RankedWeeks
+        WHERE rn = 1
+        ),
+        Week52Ago AS (
+        SELECT
+            symbol,
+            timestamp AS ts_52w_ago,
+            close AS close_52w_ago
+        FROM RankedWeeks
+        WHERE rn = 52
+        ),
+        WeekBeforeLatest AS (
+        SELECT
+            symbol,
+            timestamp AS ts_before_latest,
+            close AS close_before_latest
+        FROM RankedWeeks
+        WHERE rn = 2
+        ),
+        WeeklyReturns AS (
+        SELECT
+            symbol,
+            (close * 1.0 / LAG(close) OVER (PARTITION BY symbol ORDER BY timestamp) - 1) AS weekly_return
+        FROM stock_weekly
+        WHERE timestamp IS NOT NULL
+        ),
+        Volatility AS (
+        SELECT
+            symbol,
+            AVG(ABS(weekly_return)) AS avg_abs_weekly_return
+        FROM WeeklyReturns
+        GROUP BY symbol
+        )
+        SELECT
+        lw.symbol,
+        (wbl.close_before_latest * 1.0 / w52.close_52w_ago) - 1 AS yearly_momentum,
+        (lw.close_latest * 1.0 / wbl.close_before_latest) - 1 AS latest_week_pullback,
+        v.avg_abs_weekly_return AS avg_weekly_volatility
+        FROM LatestWeek lw
+        JOIN WeekBeforeLatest wbl ON lw.symbol = wbl.symbol
+        JOIN Week52Ago w52 ON lw.symbol = w52.symbol
+        JOIN Volatility v ON lw.symbol = v.symbol
+        WHERE
+        (wbl.close_before_latest * 1.0 / w52.close_52w_ago) - 1 > 0
+        AND (lw.close_latest * 1.0 / wbl.close_before_latest) - 1 BETWEEN -0.05 AND -0.01
+        AND v.avg_abs_weekly_return < 0.07 -- adjust this threshold for "stable"
+        ORDER BY yearly_momentum DESC;
+    `).all();
 
-      db.close();
-      return summary;
+    db.close();
+    return summary;
     }
 
 
@@ -273,7 +356,79 @@ class StockFilterService {
     }
 
 
- getMomentumAndPullbackSummaryMV4WeeksAgo() {
+    getMomentumAndPullbackSummaryMVOPTIMIZED() {
+      const dbFile = './db/stocks.db';
+      const db = new Database(dbFile);
+
+      const summary = db.prepare(`
+          WITH RankedWeeks AS (
+            SELECT
+              symbol,
+              timestamp,
+              close,
+              ROW_NUMBER() OVER (PARTITION BY symbol ORDER BY timestamp DESC) AS rn
+            FROM stock_weekly
+          ),
+          LatestWeek AS (
+            SELECT
+              symbol,
+              timestamp AS latest_timestamp,
+              close AS close_latest
+            FROM RankedWeeks
+            WHERE rn = 1
+          ),
+          Week52Ago AS (
+            SELECT
+              symbol,
+              timestamp AS ts_52w_ago,
+              close AS close_52w_ago
+            FROM RankedWeeks
+            WHERE rn = 52
+          ),
+          WeekBeforeLatest AS (
+            SELECT
+              symbol,
+              timestamp AS ts_before_latest,
+              close AS close_before_latest
+            FROM RankedWeeks
+            WHERE rn = 2
+          ),
+          WeeklyReturns AS (
+            SELECT
+              symbol,
+              (close * 1.0 / LAG(close) OVER (PARTITION BY symbol ORDER BY timestamp) - 1) AS weekly_return
+            FROM stock_weekly
+            WHERE timestamp IS NOT NULL
+          ),
+          Volatility AS (
+            SELECT
+              symbol,
+              AVG(ABS(weekly_return)) AS avg_abs_weekly_return
+            FROM WeeklyReturns
+            GROUP BY symbol
+          )
+          SELECT
+            lw.symbol,
+            (wbl.close_before_latest * 1.0 / w52.close_52w_ago) - 1 AS yearly_momentum,
+            (lw.close_latest * 1.0 / wbl.close_before_latest) - 1 AS latest_week_pullback,
+            v.avg_abs_weekly_return AS avg_weekly_volatility,
+            ((wbl.close_before_latest * 1.0 / w52.close_52w_ago) - 1) / v.avg_abs_weekly_return AS momentum_score
+          FROM LatestWeek lw
+          JOIN WeekBeforeLatest wbl ON lw.symbol = wbl.symbol
+          JOIN Week52Ago w52 ON lw.symbol = w52.symbol
+          JOIN Volatility v ON lw.symbol = v.symbol
+          WHERE
+            (wbl.close_before_latest * 1.0 / w52.close_52w_ago) - 1 > 0.00152
+            AND (lw.close_latest * 1.0 / wbl.close_before_latest) - 1 BETWEEN -0.0509 AND -0.0336
+            AND v.avg_abs_weekly_return BETWEEN 0.0228 AND 0.0327
+          ORDER BY momentum_score DESC;
+        `).all();
+
+        db.close();
+        return summary;
+}
+
+ async getMomentumAndPullbackSummaryMV4WeeksAgo() {
   const dbFile = './db/stocks.db';
   const db = new Database(dbFile);
 
@@ -349,6 +504,261 @@ class StockFilterService {
       (f5.close_5w_ago * 1.0 / w52.close_52w_ago) - 1 > 0
       AND (f4.close_4w_ago * 1.0 / f5.close_5w_ago) - 1 BETWEEN -0.05 AND -0.01
       AND v.avg_abs_weekly_return < 0.07
+    ORDER BY momentum_score DESC;
+  `).all();
+
+  db.close();
+  return summary;
+}
+
+
+async getMomentumAndPullbackSummaryMV24WeeksAgo() {
+  const dbFile = './db/stocks.db';
+  const db = new Database(dbFile);
+
+  const summary = db.prepare(`
+    WITH RankedWeeks AS (
+      SELECT
+        symbol,
+        timestamp,
+        close,
+        ROW_NUMBER() OVER (PARTITION BY symbol ORDER BY timestamp DESC) AS rn
+      FROM stock_weeklytwoyear
+    ),
+    TwentyFourWeeksAgo AS (
+      SELECT
+        symbol,
+        timestamp AS ts_24w_ago,
+        close AS close_24w_ago
+      FROM RankedWeeks
+      WHERE rn = 25  -- 24 weeks ago
+    ),
+    TwentyFiveWeeksAgo AS (
+      SELECT
+        symbol,
+        timestamp AS ts_25w_ago,
+        close AS close_25w_ago
+      FROM RankedWeeks
+      WHERE rn = 26  -- week before 24 weeks ago
+    ),
+    Week52Ago AS (
+      SELECT
+        symbol,
+        timestamp AS ts_52w_ago,
+        close AS close_52w_ago
+      FROM RankedWeeks
+      WHERE rn = 52  -- 52 weeks ago
+    ),
+    LatestWeek AS (
+      SELECT
+        symbol,
+        close AS latest_close
+      FROM RankedWeeks
+      WHERE rn = 1
+    ),
+    WeeklyReturns AS (
+      SELECT
+        symbol,
+        (close * 1.0 / LAG(close) OVER (PARTITION BY symbol ORDER BY timestamp) - 1) AS weekly_return
+      FROM stock_weeklytwoyear
+      WHERE timestamp IS NOT NULL
+    ),
+    Volatility AS (
+      SELECT
+        symbol,
+        AVG(ABS(weekly_return)) AS avg_abs_weekly_return
+      FROM WeeklyReturns
+      GROUP BY symbol
+    )
+    SELECT
+      f24.symbol,
+      f24.ts_24w_ago AS buy_date,
+      f24.close_24w_ago AS buy_price,
+      (f25.close_25w_ago * 1.0 / w52.close_52w_ago) - 1 AS yearly_momentum,
+      (f24.close_24w_ago * 1.0 / f25.close_25w_ago) - 1 AS pullback_24w_ago,
+      v.avg_abs_weekly_return AS avg_weekly_volatility,
+      ((f25.close_25w_ago * 1.0 / w52.close_52w_ago) - 1) / v.avg_abs_weekly_return AS momentum_score,
+      ROUND(((lw.latest_close - f24.close_24w_ago) * 100.0 / f24.close_24w_ago), 2) AS price_change_since_24w_percent
+    FROM TwentyFourWeeksAgo f24
+    JOIN TwentyFiveWeeksAgo f25 ON f24.symbol = f25.symbol
+    JOIN Week52Ago w52 ON f24.symbol = w52.symbol
+    JOIN Volatility v ON f24.symbol = v.symbol
+    JOIN LatestWeek lw ON f24.symbol = lw.symbol
+    WHERE
+      (f25.close_25w_ago * 1.0 / w52.close_52w_ago) - 1 > 0
+      AND (f24.close_24w_ago * 1.0 / f25.close_25w_ago) - 1 BETWEEN -0.05 AND -0.01
+      AND v.avg_abs_weekly_return < 0.07
+    ORDER BY momentum_score DESC;
+  `).all();
+
+  db.close();
+  return summary;
+}
+
+async getMomentumAndPullbackSummaryMV24WeeksAgoNONRESTRICTED() {
+  const dbFile = './db/stocks.db';
+  const db = new Database(dbFile);
+
+const summary = db.prepare(`
+  WITH RankedWeeks AS (
+    SELECT
+      symbol,
+      timestamp,
+      close,
+      ROW_NUMBER() OVER (PARTITION BY symbol ORDER BY timestamp DESC) AS rn
+    FROM stock_weeklytwoyear
+  ),
+  TwentyFourWeeksAgo AS (
+    SELECT
+      symbol,
+      timestamp AS ts_24w_ago,
+      close AS close_24w_ago
+    FROM RankedWeeks
+    WHERE rn = 25
+  ),
+  TwentyFiveWeeksAgo AS (
+    SELECT
+      symbol,
+      timestamp AS ts_25w_ago,
+      close AS close_25w_ago
+    FROM RankedWeeks
+    WHERE rn = 26
+  ),
+  Week52Ago AS (
+    SELECT
+      symbol,
+      timestamp AS ts_52w_ago,
+      close AS close_52w_ago
+    FROM RankedWeeks
+    WHERE rn = 52
+  ),
+  LatestWeek AS (
+    SELECT
+      symbol,
+      close AS latest_close
+    FROM RankedWeeks
+    WHERE rn = 1
+  ),
+  VolatilityPeriodBounds AS (
+    SELECT
+      symbol,
+      MIN(CASE WHEN rn = 26 THEN timestamp END) AS ts_end,
+      MIN(CASE WHEN rn = 52 THEN timestamp END) AS ts_start
+    FROM RankedWeeks
+    WHERE rn IN (26, 52)
+    GROUP BY symbol
+  ),
+  FilteredWeeklyReturns AS (
+    SELECT
+      wr.symbol,
+      wr.timestamp,
+      (wr.close * 1.0 / LAG(wr.close) OVER (PARTITION BY wr.symbol ORDER BY wr.timestamp) - 1) AS weekly_return
+    FROM stock_weeklytwoyear wr
+    JOIN VolatilityPeriodBounds b ON wr.symbol = b.symbol
+    WHERE wr.timestamp BETWEEN b.ts_start AND b.ts_end
+  ),
+  Volatility AS (
+    SELECT
+      symbol,
+      AVG(ABS(weekly_return)) AS avg_abs_weekly_return
+    FROM FilteredWeeklyReturns
+    GROUP BY symbol
+  )
+  SELECT
+    f24.symbol,
+    f24.ts_24w_ago AS buy_date,
+    f24.close_24w_ago AS buy_price,
+    (f25.close_25w_ago * 1.0 / w52.close_52w_ago) - 1 AS yearly_momentum,
+    (f24.close_24w_ago * 1.0 / f25.close_25w_ago) - 1 AS pullback_24w_ago,
+    v.avg_abs_weekly_return AS avg_weekly_volatility,
+    ((f25.close_25w_ago * 1.0 / w52.close_52w_ago) - 1) / v.avg_abs_weekly_return AS momentum_score,
+    ROUND(((lw.latest_close - f24.close_24w_ago) * 100.0 / f24.close_24w_ago), 2) AS price_change_since_24w_percent
+  FROM TwentyFourWeeksAgo f24
+  JOIN TwentyFiveWeeksAgo f25 ON f24.symbol = f25.symbol
+  JOIN Week52Ago w52 ON f24.symbol = w52.symbol
+  JOIN Volatility v ON f24.symbol = v.symbol
+  JOIN LatestWeek lw ON f24.symbol = lw.symbol
+  ORDER BY momentum_score DESC;
+`).all();
+
+
+  db.close();
+  return summary;
+}
+
+
+async getMomentumAndPullbackSummaryMV4WeeksAgoNONRESTRCTED() {
+  const dbFile = './db/stocks.db';
+  const db = new Database(dbFile);
+
+  const summary = db.prepare(`
+    WITH RankedWeeks AS (
+      SELECT
+        symbol,
+        timestamp,
+        close,
+        ROW_NUMBER() OVER (PARTITION BY symbol ORDER BY timestamp DESC) AS rn
+      FROM stock_weekly
+    ),
+    FourWeeksAgo AS (
+      SELECT
+        symbol,
+        timestamp AS ts_4w_ago,
+        close AS close_4w_ago
+      FROM RankedWeeks
+      WHERE rn = 5  -- 4 weeks ago
+    ),
+    FiveWeeksAgo AS (
+      SELECT
+        symbol,
+        timestamp AS ts_5w_ago,
+        close AS close_5w_ago
+      FROM RankedWeeks
+      WHERE rn = 6  -- week before 4 weeks ago
+    ),
+    Week52Ago AS (
+      SELECT
+        symbol,
+        timestamp AS ts_52w_ago,
+        close AS close_52w_ago
+      FROM RankedWeeks
+      WHERE rn = 52  -- 52 weeks ago (1 year ago from latest)
+    ),
+    LatestWeek AS (
+      SELECT
+        symbol,
+        close AS latest_close
+      FROM RankedWeeks
+      WHERE rn = 1
+    ),
+    WeeklyReturns AS (
+      SELECT
+        symbol,
+        (close * 1.0 / LAG(close) OVER (PARTITION BY symbol ORDER BY timestamp) - 1) AS weekly_return
+      FROM stock_weekly
+      WHERE timestamp IS NOT NULL
+    ),
+    Volatility AS (
+      SELECT
+        symbol,
+        AVG(ABS(weekly_return)) AS avg_abs_weekly_return
+      FROM WeeklyReturns
+      GROUP BY symbol
+    )
+    SELECT
+      f4.symbol,
+      f4.ts_4w_ago AS buy_date,
+      f4.close_4w_ago AS buy_price,
+      (f5.close_5w_ago * 1.0 / w52.close_52w_ago) - 1 AS yearly_momentum,
+      (f4.close_4w_ago * 1.0 / f5.close_5w_ago) - 1 AS pullback_4w_ago,
+      v.avg_abs_weekly_return AS avg_weekly_volatility,
+      ((f5.close_5w_ago * 1.0 / w52.close_52w_ago) - 1) / v.avg_abs_weekly_return AS momentum_score,
+      ROUND(((lw.latest_close - f4.close_4w_ago) * 100.0 / f4.close_4w_ago), 2) AS price_change_since_4w_percent
+    FROM FourWeeksAgo f4
+    JOIN FiveWeeksAgo f5 ON f4.symbol = f5.symbol
+    JOIN Week52Ago w52 ON f4.symbol = w52.symbol
+    JOIN Volatility v ON f4.symbol = v.symbol
+    JOIN LatestWeek lw ON f4.symbol = lw.symbol
     ORDER BY momentum_score DESC;
   `).all();
 
