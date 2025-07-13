@@ -331,6 +331,77 @@ router.get('/get-momentum-and-pullback-summary-mv24weeks-ago-nonrestricted', con
 
 /**
  * @swagger
+ * /api/stockfilter/get-filtered-momentum-summary:
+ *   get:
+ *     summary: getFilteredMomentumSummary (auto-generated route)
+ *     tags:
+ *       - stockfilter
+ *     parameters:
+ *       - in: query
+ *         name: minMomentum
+ *         required: false
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: maxMomentum
+ *         required: false
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: minPullback
+ *         required: false
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: maxPullback
+ *         required: false
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: minVolatility
+ *         required: false
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: maxVolatility
+ *         required: false
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: JSON data returned
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ */
+router.get('/get-filtered-momentum-summary', controller.getFilteredMomentumSummary);
+
+/**
+ * @swagger
+ * /api/stockfilter/average:
+ *   get:
+ *     summary: average (auto-generated route)
+ *     tags:
+ *       - stockfilter
+ *     parameters:
+ *       - in: query
+ *         name: arr
+ *         required: false
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: JSON data returned
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ */
+router.get('/average', controller.average);
+
+/**
+ * @swagger
  * /api/stockfilter/get-momentum-and-pullback-summary-mv4weeks-ago-nonrestrcted:
  *   get:
  *     summary: getMomentumAndPullbackSummaryMV4WeeksAgoNONRESTRCTED (auto-generated route)

@@ -686,6 +686,40 @@ const summary = db.prepare(`
   return summary;
 }
 
+async getFilteredMomentumSummary({
+  minMomentum = -Infinity,
+  maxMomentum = Infinity,
+  minPullback = -Infinity,
+  maxPullback = Infinity,
+  minVolatility = -Infinity,
+  maxVolatility = Infinity
+} = {}) {
+  const allResults = await this.getMomentumAndPullbackSummaryMV24WeeksAgoNONRESTRICTED();
+
+  // Filter client-side using strict JS math
+  const filtered = allResults.filter(item => {
+    return (
+      item.yearly_momentum >= minMomentum &&
+      item.yearly_momentum <= maxMomentum &&
+      item.pullback_24w_ago >= minPullback &&
+      item.pullback_24w_ago <= maxPullback &&
+      item.avg_weekly_volatility >= minVolatility &&
+      item.avg_weekly_volatility <= maxVolatility
+    );
+  });
+
+  return {
+    average_return_percent: this.average(filtered.map(d => d.price_change_since_24w_percent)),
+    results: filtered
+  };
+}
+
+// Helper to calculate average
+average(arr) {
+  if (arr.length === 0) return 0;
+  return arr.reduce((a, b) => a + b, 0) / arr.length;
+}
+
 
 async getMomentumAndPullbackSummaryMV4WeeksAgoNONRESTRCTED() {
   const dbFile = './db/stocks.db';

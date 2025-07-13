@@ -24,7 +24,7 @@ class BacktestService {
     const stocks = await stockFilterService.getMomentumAndPullbackSummaryMV24WeeksAgoNONRESTRICTED();
     return this.analyzeStocks(stocks, maxNegRatio, 24, minStockCount, binsize);
   }
-  
+
  getQuartileBins(values, numBins = 15) {
   const sorted = [...values].sort((a, b) => a - b); // Sort the values in ascending order
   const n = sorted.length;
@@ -71,7 +71,7 @@ class BacktestService {
 
     const { bins: momentumBins, thresholds: momentumThresholds } = this.getQuartileBins(momentumValues, binsize);
     const { bins: pullbackBins, thresholds: pullbackThresholds } = this.getQuartileBins(pullbackValues, binsize);
-    const { bins: volBins, thresholds: volThresholds } = this.getQuartileBins(volValues, numBins=binsize);
+    const { bins: volBins, thresholds: volThresholds } = this.getQuartileBins(volValues, binsize);
 
     const momentumMinMax = this.getMinMax(momentumValues);
     const pullbackMinMax = this.getMinMax(pullbackValues);

@@ -165,6 +165,33 @@ exports.getMomentumAndPullbackSummaryMV24WeeksAgoNONRESTRICTED = async (req, res
   }
 };
 
+exports.getFilteredMomentumSummary = async (req, res) => {
+  try {
+    const minMomentum = req.query.minMomentum || '';
+    const maxMomentum = req.query.maxMomentum || '';
+    const minPullback = req.query.minPullback || '';
+    const maxPullback = req.query.maxPullback || '';
+    const minVolatility = req.query.minVolatility || '';
+    const maxVolatility = req.query.maxVolatility || '';
+
+    const result = await stockFilterService.getFilteredMomentumSummary(minMomentum, maxMomentum, minPullback, maxPullback, minVolatility, maxVolatility);
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.average = async (req, res) => {
+  try {
+    const arr = req.query.arr || '';
+
+    const result = await stockFilterService.average(arr);
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 exports.getMomentumAndPullbackSummaryMV4WeeksAgoNONRESTRCTED = async (req, res) => {
   try {
     // no params
