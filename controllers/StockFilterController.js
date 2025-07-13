@@ -167,14 +167,24 @@ exports.getMomentumAndPullbackSummaryMV24WeeksAgoNONRESTRICTED = async (req, res
 
 exports.getFilteredMomentumSummary = async (req, res) => {
   try {
-    const minMomentum = req.query.minMomentum || '';
-    const maxMomentum = req.query.maxMomentum || '';
-    const minPullback = req.query.minPullback || '';
-    const maxPullback = req.query.maxPullback || '';
-    const minVolatility = req.query.minVolatility || '';
-    const maxVolatility = req.query.maxVolatility || '';
+    const {
+      minMomentum = '',
+      maxMomentum = '',
+      minPullback = '',
+      maxPullback = '',
+      minVolatility = '',
+      maxVolatility = ''
+    } = req.query;
 
-    const result = await stockFilterService.getFilteredMomentumSummary(minMomentum, maxMomentum, minPullback, maxPullback, minVolatility, maxVolatility);
+    const result = await stockFilterService.getFilteredMomentumSummary({
+      minMomentum,
+      maxMomentum,
+      minPullback,
+      maxPullback,
+      minVolatility,
+      maxVolatility
+    });
+
     res.json(result);
   } catch (error) {
     res.status(500).json({ error: error.message });

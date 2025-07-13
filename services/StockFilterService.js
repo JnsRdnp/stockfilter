@@ -694,19 +694,47 @@ async getFilteredMomentumSummary({
   minVolatility = -Infinity,
   maxVolatility = Infinity
 } = {}) {
+  // Convert all to numbers
+  minMomentum = Number(minMomentum);
+  maxMomentum = Number(maxMomentum);
+  minPullback = Number(minPullback);
+  maxPullback = Number(maxPullback);
+  minVolatility = Number(minVolatility);
+  maxVolatility = Number(maxVolatility);
+
+  // Log what we're actually working with
+
+  console.log({
+    minMomentum, maxMomentum, minPullback, maxPullback, minVolatility, maxVolatility
+  });
+
+  console.log('Filter parameters:', {
+  minMomentum, typeOfMinMomentum: typeof minMomentum,
+  maxMomentum, typeOfMaxMomentum: typeof maxMomentum,
+  minPullback, typeOfMinPullback: typeof minPullback,
+  maxPullback, typeOfMaxPullback: typeof maxPullback,
+  minVolatility, typeOfMinVolatility: typeof minVolatility,
+  maxVolatility, typeOfMaxVolatility: typeof maxVolatility
+});
+
   const allResults = await this.getMomentumAndPullbackSummaryMV24WeeksAgoNONRESTRICTED();
 
-  // Filter client-side using strict JS math
+  // Optional: Show 1st item to confirm structure
+
+
   const filtered = allResults.filter(item => {
-    return (
+    const isMatch =
       item.yearly_momentum >= minMomentum &&
       item.yearly_momentum <= maxMomentum &&
       item.pullback_24w_ago >= minPullback &&
       item.pullback_24w_ago <= maxPullback &&
       item.avg_weekly_volatility >= minVolatility &&
-      item.avg_weekly_volatility <= maxVolatility
-    );
+      item.avg_weekly_volatility <= maxVolatility;
+
+
+    return isMatch;
   });
+
 
   return {
     average_return_percent: this.average(filtered.map(d => d.price_change_since_24w_percent)),

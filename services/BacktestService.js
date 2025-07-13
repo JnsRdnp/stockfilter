@@ -15,6 +15,13 @@ class BacktestService {
     return this.analyzeStocks(stocks, maxNegRatio, 4, minStockCount, binsize);
   }
 
+  async getBacktestWithoutvol(maxNegRatio = 0.1, minStockCount = 2, binsize = 10) {
+    const stocks = await stockFilterService.getMomentumAndPullbackSummaryMV4WeeksAgoNONRESTRCTED();
+    return this.analyzeStocksWithoutvol(stocks, maxNegRatio, 4, minStockCount, binsize);
+  }
+
+
+
   async getBacktest6mRestricted(maxNegRatio = 0.1, minStockCount = 2, binsize = 10) {
     const stocks = await stockFilterService.getMomentumAndPullbackSummaryMV24WeeksAgo();
     return this.analyzeStocks(stocks, maxNegRatio, 24, minStockCount, binsize);
@@ -131,6 +138,72 @@ class BacktestService {
 
     return { top_combinations, stocks_by_combination };
   }
+
+  analyzeStocksWithoutvol(stocks, maxNegRatio, weeksAgo = 4, minStockCount = 2, binsize = 10) {
+  if (!stocks.length) return { top_combinations: [], stocks_by_combination: {} };
+
+  const momentumValues = stocks.map(s => s.momentum_score);
+  const pullbackValues = stocks.map(s => s[`pullback_${weeksAgo}w_ago`]);
+
+  const { bins: momentumBins, thresholds: momentumThresholds } = this.getQuartileBins(momentumValues, binsize);
+  const { bins: pullbackBins, thresholds: pullbackThresholds } = this.getQuartileBins(pullbackValues, binsize);
+
+  const momentumMinMax = this.getMinMax(momentumValues);
+  const pullbackMinMax = this.getMinMax(pullbackValues);
+
+  const enriched = stocks.map((s, i) => ({
+    ...s,
+    momentum_bin: momentumBins[i],
+    pullback_bin: pullbackBins[i]
+  }));
+
+  const grouped = _.groupBy(enriched, s => `${s.momentum_bin}-${s.pullback_bin}`);
+
+  const groups = Object.entries(grouped)
+    .map(([key, group]) => {
+      const profits = group.map(s => s[`price_change_since_${weeksAgo}w_percent`]);
+      const avg = _.mean(profits);
+      const count = group.length;
+      const negRatio = profits.filter(p => p < 0).length / count;
+
+      return {
+        key,
+        momentum_bin: group[0].momentum_bin,
+        pullback_bin: group[0].pullback_bin,
+        avg_profit: avg,
+        count,
+        neg_ratio: negRatio,
+        stocks: group
+      };
+    })
+    .filter(g => g.count >= minStockCount && g.neg_ratio <= maxNegRatio)
+    .sort((a, b) => b.avg_profit - a.avg_profit)
+    .slice(0, 5);
+
+  const top_combinations = groups.map(g => {
+    const momentumRange = this.getRange(momentumThresholds, g.momentum_bin, momentumMinMax.min, momentumMinMax.max);
+    const pullbackRange = this.getRange(pullbackThresholds, g.pullback_bin, pullbackMinMax.min, pullbackMinMax.max);
+
+    return {
+      key: g.key,
+      momentum: `[${momentumRange[0].toFixed(4)} - ${momentumRange[1].toFixed(4)}]`,
+      pullback: `[${pullbackRange[0].toFixed(4)} - ${pullbackRange[1].toFixed(4)}]`,
+      mean: g.avg_profit,
+      count: g.count,
+      neg_ratio: g.neg_ratio
+    };
+  });
+
+  const stocks_by_combination = {};
+  for (const group of groups) {
+    stocks_by_combination[group.key] = group.stocks;
+  }
+
+  return { top_combinations, stocks_by_combination };
+}
+
+
+  
 }
 
 module.exports = BacktestService;

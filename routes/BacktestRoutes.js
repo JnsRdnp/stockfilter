@@ -70,6 +70,39 @@ router.get('/get-backtest', controller.getBacktest);
 
 /**
  * @swagger
+ * /api/backtest/get-backtest-withoutvol:
+ *   get:
+ *     summary: getBacktestWithoutvol (auto-generated route)
+ *     tags:
+ *       - backtest
+ *     parameters:
+ *       - in: query
+ *         name: maxNegRatio
+ *         required: false
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: minStockCount
+ *         required: false
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: binsize
+ *         required: false
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: JSON data returned
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ */
+router.get('/get-backtest-withoutvol', controller.getBacktestWithoutvol);
+
+/**
+ * @swagger
  * /api/backtest/get-backtest6m-restricted:
  *   get:
  *     summary: getBacktest6mRestricted (auto-generated route)
@@ -265,6 +298,49 @@ router.get('/get-range', controller.getRange);
  *               type: object
  */
 router.get('/analyze-stocks', controller.analyzeStocks);
+
+/**
+ * @swagger
+ * /api/backtest/analyze-stocks-withoutvol:
+ *   get:
+ *     summary: analyzeStocksWithoutvol (auto-generated route)
+ *     tags:
+ *       - backtest
+ *     parameters:
+ *       - in: query
+ *         name: stocks
+ *         required: false
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: maxNegRatio
+ *         required: false
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: weeksAgo
+ *         required: false
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: minStockCount
+ *         required: false
+ *         schema:
+ *           type: integer
+ *       - in: query
+ *         name: binsize
+ *         required: false
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: JSON data returned
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ */
+router.get('/analyze-stocks-withoutvol', controller.analyzeStocksWithoutvol);
 
 
 module.exports = router;
