@@ -127,75 +127,75 @@ class StockFilterService {
     console.log('All symbols processed.');
   }
 
-    getMomentumAndPullbackSummary() {
-    const dbFile = './db/stocks.db'
-    const db = new Database(dbFile);
+  getMomentumAndPullbackSummary() {
+      const dbFile = './db/stocks.db'
+      const db = new Database(dbFile);
 
-    const summary = db.prepare(`
-        WITH RankedWeeks AS (
-        SELECT
-            symbol,
-            timestamp,
-            close,
-            ROW_NUMBER() OVER (PARTITION BY symbol ORDER BY timestamp DESC) AS rn
-        FROM stock_weekly
-        ),
-        LatestWeek AS (
-        SELECT
-            symbol,
-            timestamp AS latest_timestamp,
-            close AS close_latest
-        FROM RankedWeeks
-        WHERE rn = 1
-        ),
-        Week52Ago AS (
-        SELECT
-            symbol,
-            timestamp AS ts_52w_ago,
-            close AS close_52w_ago
-        FROM RankedWeeks
-        WHERE rn = 52
-        ),
-        WeekBeforeLatest AS (
-        SELECT
-            symbol,
-            timestamp AS ts_before_latest,
-            close AS close_before_latest
-        FROM RankedWeeks
-        WHERE rn = 2
-        ),
-        WeeklyReturns AS (
-        SELECT
-            symbol,
-            (close * 1.0 / LAG(close) OVER (PARTITION BY symbol ORDER BY timestamp) - 1) AS weekly_return
-        FROM stock_weekly
-        WHERE timestamp IS NOT NULL
-        ),
-        Volatility AS (
-        SELECT
-            symbol,
-            AVG(ABS(weekly_return)) AS avg_abs_weekly_return
-        FROM WeeklyReturns
-        GROUP BY symbol
-        )
-        SELECT
-        lw.symbol,
-        (wbl.close_before_latest * 1.0 / w52.close_52w_ago) - 1 AS yearly_momentum,
-        (lw.close_latest * 1.0 / wbl.close_before_latest) - 1 AS latest_week_pullback,
-        v.avg_abs_weekly_return AS avg_weekly_volatility
-        FROM LatestWeek lw
-        JOIN WeekBeforeLatest wbl ON lw.symbol = wbl.symbol
-        JOIN Week52Ago w52 ON lw.symbol = w52.symbol
-        JOIN Volatility v ON lw.symbol = v.symbol
-        WHERE
-        (wbl.close_before_latest * 1.0 / w52.close_52w_ago) - 1 > 0
-        AND (lw.close_latest * 1.0 / wbl.close_before_latest) - 1 BETWEEN -0.05 AND -0.01
-        AND v.avg_abs_weekly_return < 0.07 -- adjust this threshold for "stable"
-        ORDER BY yearly_momentum DESC;
-    `).all();
+      const summary = db.prepare(`
+          WITH RankedWeeks AS (
+          SELECT
+              symbol,
+              timestamp,
+              close,
+              ROW_NUMBER() OVER (PARTITION BY symbol ORDER BY timestamp DESC) AS rn
+          FROM stock_weekly
+          ),
+          LatestWeek AS (
+          SELECT
+              symbol,
+              timestamp AS latest_timestamp,
+              close AS close_latest
+          FROM RankedWeeks
+          WHERE rn = 1
+          ),
+          Week52Ago AS (
+          SELECT
+              symbol,
+              timestamp AS ts_52w_ago,
+              close AS close_52w_ago
+          FROM RankedWeeks
+          WHERE rn = 52
+          ),
+          WeekBeforeLatest AS (
+          SELECT
+              symbol,
+              timestamp AS ts_before_latest,
+              close AS close_before_latest
+          FROM RankedWeeks
+          WHERE rn = 2
+          ),
+          WeeklyReturns AS (
+          SELECT
+              symbol,
+              (close * 1.0 / LAG(close) OVER (PARTITION BY symbol ORDER BY timestamp) - 1) AS weekly_return
+          FROM stock_weekly
+          WHERE timestamp IS NOT NULL
+          ),
+          Volatility AS (
+          SELECT
+              symbol,
+              AVG(ABS(weekly_return)) AS avg_abs_weekly_return
+          FROM WeeklyReturns
+          GROUP BY symbol
+          )
+          SELECT
+          lw.symbol,
+          (wbl.close_before_latest * 1.0 / w52.close_52w_ago) - 1 AS yearly_momentum,
+          (lw.close_latest * 1.0 / wbl.close_before_latest) - 1 AS latest_week_pullback,
+          v.avg_abs_weekly_return AS avg_weekly_volatility
+          FROM LatestWeek lw
+          JOIN WeekBeforeLatest wbl ON lw.symbol = wbl.symbol
+          JOIN Week52Ago w52 ON lw.symbol = w52.symbol
+          JOIN Volatility v ON lw.symbol = v.symbol
+          WHERE
+          (wbl.close_before_latest * 1.0 / w52.close_52w_ago) - 1 > 0
+          AND (lw.close_latest * 1.0 / wbl.close_before_latest) - 1 BETWEEN -0.05 AND -0.01
+          AND v.avg_abs_weekly_return < 0.07 -- adjust this threshold for "stable"
+          ORDER BY yearly_momentum DESC;
+      `).all();
 
-    db.close();
-    return summary;
+      db.close();
+      return summary;
     }
 
 
