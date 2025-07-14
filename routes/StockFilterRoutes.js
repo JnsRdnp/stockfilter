@@ -261,17 +261,66 @@ router.get('/get-momentum-and-pullback-summary-mv', controller.getMomentumAndPul
  * @swagger
  * /api/stockfilter/get-momentum-and-pullback-summary-mvoptimized:
  *   get:
- *     summary: getMomentumAndPullbackSummaryMVOPTIMIZED (auto-generated route)
+ *     summary: Get stocks with strong momentum and acceptable volatility and pullback
  *     tags:
  *       - stockfilter
-
+ *     parameters:
+ *       - in: query
+ *         name: momentumMin
+ *         schema:
+ *           type: number
+ *         required: false
+ *         description: Minimum yearly momentum (default 0.00152)
+ *       - in: query
+ *         name: momentumMax
+ *         schema:
+ *           type: number
+ *         required: false
+ *         description: Maximum yearly momentum (default 999)
+ *       - in: query
+ *         name: pullbackMin
+ *         schema:
+ *           type: number
+ *         required: false
+ *         description: Minimum pullback value (default -0.0509)
+ *       - in: query
+ *         name: pullbackMax
+ *         schema:
+ *           type: number
+ *         required: false
+ *         description: Maximum pullback value (default -0.0336)
+ *       - in: query
+ *         name: volatilityMin
+ *         schema:
+ *           type: number
+ *         required: false
+ *         description: Minimum average weekly volatility (default 0.0228)
+ *       - in: query
+ *         name: volatilityMax
+ *         schema:
+ *           type: number
+ *         required: false
+ *         description: Maximum average weekly volatility (default 0.0327)
  *     responses:
  *       200:
- *         description: JSON data returned
+ *         description: JSON array of filtered stock data
  *         content:
  *           application/json:
  *             schema:
- *               type: object
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   symbol:
+ *                     type: string
+ *                   yearly_momentum:
+ *                     type: number
+ *                   latest_week_pullback:
+ *                     type: number
+ *                   avg_weekly_volatility:
+ *                     type: number
+ *                   momentum_score:
+ *                     type: number
  */
 router.get('/get-momentum-and-pullback-summary-mvoptimized', controller.getMomentumAndPullbackSummaryMVOPTIMIZED);
 

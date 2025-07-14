@@ -123,9 +123,23 @@ exports.getMomentumAndPullbackSummaryMV = async (req, res) => {
 
 exports.getMomentumAndPullbackSummaryMVOPTIMIZED = async (req, res) => {
   try {
-    // no params
+    // Parse query parameters (falling back to default values if not provided)
+    const momentumMin = parseFloat(req.query.momentumMin) || 0.00152;
+    const momentumMax = parseFloat(req.query.momentumMax) || 999; // a large default max
 
-    const result = await stockFilterService.getMomentumAndPullbackSummaryMVOPTIMIZED();
+    const pullbackMin = parseFloat(req.query.pullbackMin) || -0.0509;
+    const pullbackMax = parseFloat(req.query.pullbackMax) || -0.0336;
+
+    const volatilityMin = parseFloat(req.query.volatilityMin) || 0.0228;
+    const volatilityMax = parseFloat(req.query.volatilityMax) || 0.0327;
+
+    // Call the service function with the parsed arrays
+    const result = await stockFilterService.getMomentumAndPullbackSummaryMVOPTIMIZED(
+      [momentumMin, momentumMax],
+      [pullbackMin, pullbackMax],
+      [volatilityMin, volatilityMax]
+    );
+
     res.json(result);
   } catch (error) {
     res.status(500).json({ error: error.message });
