@@ -4,6 +4,8 @@ node_modules/
 tmp
 
 db/
+top_group_details.xlsx
+.~lock.top_group_details.xlsx#
 
 # Logs
 logs
