@@ -748,7 +748,7 @@ average(arr) {
   return arr.reduce((a, b) => a + b, 0) / arr.length;
 }
 
-async getMomentumAndPullbackSummaryByXWeeksAgo(xWeeksAgo) {
+async getMomentumAndPullbackSummaryByXWeeksAgo(xWeeksAgo, minMomentum = null) {
   const xWeeks = parseInt(xWeeksAgo, 10);
 
   if (isNaN(xWeeks) || xWeeks < 4) {
@@ -762,7 +762,7 @@ async getMomentumAndPullbackSummaryByXWeeksAgo(xWeeksAgo) {
   const dbFile = './db/stocks.db';
   const db = new Database(dbFile);
 
-  const stmt = db.prepare(`
+  const sql = `
     WITH Ordered AS (
       SELECT
         symbol,
@@ -838,17 +838,22 @@ async getMomentumAndPullbackSummaryByXWeeksAgo(xWeeksAgo) {
       b.buy_price IS NOT NULL AND
       wb.close_before_buy IS NOT NULL AND
       m.close_52w_ago IS NOT NULL AND
-      f.sell_price IS NOT NULL;
-  `);
+      f.sell_price IS NOT NULL
+      ${minMomentum !== null ? 'AND ((wb.close_before_buy * 1.0 / m.close_52w_ago) - 1) >= @minMomentum' : ''}
+  `;
+
+  const stmt = db.prepare(sql);
 
   const result = stmt.all({
     x: xWeeks,
     xPlus1,
     xPlus1Plus52,
-    xMinus4
+    xMinus4,
+    minMomentum: minMomentum ?? undefined
   });
 
   db.close();
+
   return result;
 }
 

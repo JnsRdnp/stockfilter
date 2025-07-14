@@ -165,21 +165,29 @@ exports.getMomentumAndPullbackSummaryMV24WeeksAgoNONRESTRICTED = async (req, res
   }
 };
 
-exports.getFilteredMomentumSummary = async (req, res) => {
-  try {
-    const minMomentum = req.query.minMomentum || '';
-    const maxMomentum = req.query.maxMomentum || '';
-    const minPullback = req.query.minPullback || '';
-    const maxPullback = req.query.maxPullback || '';
-    const minVolatility = req.query.minVolatility || '';
-    const maxVolatility = req.query.maxVolatility || '';
+  exports.getFilteredMomentumSummary = async (req, res) => {
+    try {
+      const minMomentum = req.query.minMomentum ? Number(req.query.minMomentum) : undefined;
+      const maxMomentum = req.query.maxMomentum ? Number(req.query.maxMomentum) : undefined;
+      const minPullback = req.query.minPullback ? Number(req.query.minPullback) : undefined;
+      const maxPullback = req.query.maxPullback ? Number(req.query.maxPullback) : undefined;
+      const minVolatility = req.query.minVolatility ? Number(req.query.minVolatility) : undefined;
+      const maxVolatility = req.query.maxVolatility ? Number(req.query.maxVolatility) : undefined;
 
-    const result = await stockFilterService.getFilteredMomentumSummary(minMomentum, maxMomentum, minPullback, maxPullback, minVolatility, maxVolatility);
-    res.json(result);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
+      const result = await stockFilterService.getFilteredMomentumSummary(
+        minMomentum,
+        maxMomentum,
+        minPullback,
+        maxPullback,
+        minVolatility,
+        maxVolatility
+      );
+
+      res.json(result);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  };
 
 exports.average = async (req, res) => {
   try {

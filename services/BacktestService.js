@@ -39,15 +39,15 @@ class BacktestService {
     return groups;
   }
 
-  async getMomentumAndPullbackSummaryMVXWeeksAgo(xWeeksAgo) {
-    return await stockFilterService.getMomentumAndPullbackSummaryByXWeeksAgo(xWeeksAgo);
+  async getMomentumAndPullbackSummaryMVXWeeksAgo(xWeeksAgo, minMomentum=null) {
+    return await stockFilterService.getMomentumAndPullbackSummaryByXWeeksAgo(xWeeksAgo,minMomentum);
   }
 
   async getYearlyBacktest(maxNegRatio = 0.1, minStockCount = 2, binsize = 10, useVolatility = true) {
     const allGroups = [];
 
     for (let weeksAgo = 52; weeksAgo >= 4; weeksAgo -= 4) {
-      const stocks = await this.getMomentumAndPullbackSummaryMVXWeeksAgo(weeksAgo);
+      const stocks = await this.getMomentumAndPullbackSummaryMVXWeeksAgo(weeksAgo, 0.01);
       if (!stocks || stocks.length === 0) {
         console.warn(`No stock data found for weeksAgo=${weeksAgo}`);
         continue;
